@@ -1,8 +1,9 @@
 module Main exposing (Model, Msg(..), init, main, rawText, update, view)
 
 import Browser
-import Html exposing (Html, div, h1, img, text)
+import Html exposing (Html, div, h1, h2, img, text)
 import Html.Attributes exposing (src)
+import List.Extra
 import Parser exposing ((|.), (|=), Parser, spaces, succeed, symbol)
 
 
@@ -21,7 +22,7 @@ init =
 
 rawText : String
 rawText =
-    "       _  _     _  _  _  _  _\n     | _| _||_||_ |_   ||_||_|\n     ||_  _|  | _||_|  ||_| _|\n\n"
+    "    _  _     _  _  _  _  _ \n  | _| _||_||_ |_   ||_||_|\n  ||_  _|  | _||_|  ||_| _|\n\n"
 
 
 type Bar
@@ -50,6 +51,95 @@ validThree =
 
 
 -- TODO: more valid digits, through nine, and don't forget zero
+
+
+convertFourLinesToRawNums : String -> String
+convertFourLinesToRawNums input =
+    let
+        listOfLines =
+            input
+                |> String.replace " " "w"
+                |> String.split "\n"
+                |> List.take 3
+                |> List.map breakOneLineIntoLists
+
+        combinedLines =
+            case List.Extra.getAt 0 listOfLines of
+                Nothing ->
+                    "bad string"
+
+                Just stringA ->
+                    case List.Extra.getAt 1 listOfLines of
+                        Nothing ->
+                            "bad string"
+
+                        Just stringB ->
+                            case List.Extra.getAt 2 listOfLines of
+                                Nothing ->
+                                    "bad string"
+
+                                Just stringC ->
+                                    combineLines stringA stringB stringC
+                                        |> String.join "q"
+    in
+    combinedLines
+
+
+
+-- Function to take three strings of 27 chars each and return 9 strings corresponding
+-- to the first 3, next 3, next 3... characters of each string.
+
+
+stripAndRecombineRawNums : List String -> List String
+stripAndRecombineRawNums inputList =
+    inputList
+
+
+
+-- Function to take ONE string of 27 chars and return a list of nine strings of three chars each
+
+
+breakOneLineIntoLists : String -> List String
+breakOneLineIntoLists inputString =
+    inputString
+        |> String.toList
+        |> List.Extra.groupsOf 3
+        |> List.map String.fromList
+
+
+
+-- Function to take THREE lists of nine three-character strings as input, and combine them into ONE list of nine-character strings
+
+
+combineLines : List String -> List String -> List String -> List String
+combineLines a b c =
+    List.concat [ a, b, c ]
+        |> List.Extra.groupsOf 9
+        |> List.concat
+
+
+
+-- let
+--     charA =
+--         String.toList a
+--
+--     charB =
+--         String.toList b
+--
+--     charC =
+--         String.toList c
+--
+--     charCombine =
+--         List.concat [ charA, charB, charC ]
+--             |> String.fromList
+-- in
+-- charCombine
+-- recursive function: take three lists of strings, combine their first strings into one, pass remainders of lists into same function
+-- |> String.concat
+-- |> List.singleton
+-- |> String.concat
+-- |> String.toList
+-- in
 
 
 convertLineOfText : String -> List (Maybe NumberFromBars)
@@ -90,9 +180,19 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
+    let
+        someList =
+            convertFourLinesToRawNums rawText
+
+        someString =
+            someList
+    in
     div []
         [ img [ src "/logo.svg" ] []
         , h1 [] [ text "Your Elm App is working!" ]
+
+        -- , h2 [] [ text (Maybe.withDefault "nothing to see here" someList) ]
+        , h2 [] [ text someList ]
         ]
 
 
