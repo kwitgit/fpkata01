@@ -1,8 +1,8 @@
 module Main exposing (Model, Msg(..), init, main, rawText, update, view)
 
 import Browser
-import Html exposing (Html, div, h1, h2, img, text)
-import Html.Attributes exposing (src)
+import Html exposing (..)
+import Html.Attributes exposing (..)
 import List.Extra
 import Parser exposing ((|.), (|=), Parser, spaces, succeed, symbol)
 
@@ -53,12 +53,12 @@ validThree =
 -- TODO: more valid digits, through nine, and don't forget zero
 
 
-convertFourLinesToRawNums : String -> String
+convertFourLinesToRawNums : String -> List String
 convertFourLinesToRawNums input =
     let
         listOfLines =
             input
-                |> String.replace " " "w"
+                -- |> String.replace " " "w"
                 |> String.split "\n"
                 |> List.take 3
                 |> List.map breakOneLineIntoLists
@@ -66,27 +66,26 @@ convertFourLinesToRawNums input =
         combinedLines =
             case List.Extra.getAt 0 listOfLines of
                 Nothing ->
-                    "bad string"
+                    []
 
                 Just stringA ->
                     case List.Extra.getAt 1 listOfLines of
                         Nothing ->
-                            "bad string"
+                            []
 
                         Just stringB ->
                             case List.Extra.getAt 2 listOfLines of
                                 Nothing ->
-                                    "bad string"
+                                    []
 
                                 Just stringC ->
                                     combineLines stringA stringB stringC
-                                        |> String.join "q"
     in
     combinedLines
 
 
 
--- Function to take ONE string of 27 chars and return a list of nine strings of three chars each
+-- Function to take ONE string , which is a line of 27 chars, and return a list of nine strings of three chars each
 
 
 breakOneLineIntoLists : String -> List String
@@ -99,11 +98,6 @@ breakOneLineIntoLists inputString =
 
 
 -- Function to take THREE lists of nine three-character strings as input, and combine them into ONE list of nine-character strings
--- combineLines : List String -> List String -> List String -> List String
--- combineLines a b c =
---     List.concat [ a, b, c ]
---         |> List.Extra.groupsOf 9
---         |> List.concat
 
 
 combineLines : List String -> List String -> List String -> List String
@@ -114,12 +108,18 @@ combineLines a b c =
                 [] ->
                     []
 
+                [ x ] ->
+                    []
+
                 x :: xs ->
                     xs
 
         line2s =
             case b of
                 [] ->
+                    []
+
+                [ x ] ->
                     []
 
                 x :: xs ->
@@ -130,6 +130,9 @@ combineLines a b c =
                 [] ->
                     []
 
+                [ x ] ->
+                    []
+
                 x :: xs ->
                     xs
 
@@ -137,6 +140,9 @@ combineLines a b c =
             case a of
                 [] ->
                     []
+
+                [ x ] ->
+                    [ x ]
 
                 x :: xs ->
                     [ x ]
@@ -146,6 +152,9 @@ combineLines a b c =
                 [] ->
                     []
 
+                [ x ] ->
+                    [ x ]
+
                 x :: xs ->
                     [ x ]
 
@@ -154,23 +163,20 @@ combineLines a b c =
                 [] ->
                     []
 
+                [ x ] ->
+                    [ x ]
+
                 x :: xs ->
                     [ x ]
 
-        -- nextChunks =
-        --     combineLines line1s line2s line3s
+        nextChunks =
+            if List.length line1s > 0 then
+                combineLines line1s line2s line3s
+
+            else
+                []
     in
-    line1first ++ line2first ++ line3first
-
-
-sumOfSquares : Int -> Int
-sumOfSquares n =
-    case n of
-        0 ->
-            0
-
-        _ ->
-            (n ^ 2) + sumOfSquares (n - 1)
+    line1first ++ line2first ++ line3first ++ nextChunks
 
 
 convertLineOfText : String -> List (Maybe NumberFromBars)
@@ -212,18 +218,17 @@ update msg model =
 view : Model -> Html Msg
 view model =
     let
-        someList =
+        rawList : List String
+        rawList =
             convertFourLinesToRawNums rawText
-
-        someString =
-            someList
     in
     div []
         [ img [ src "/logo.svg" ] []
         , h1 [] [ text "Your Elm App is working!" ]
-
-        -- , h2 [] [ text (Maybe.withDefault "nothing to see here" someList) ]
-        , h2 [] [ text someList ]
+        , h2 [ class "f4 bold center mw6 courier" ]
+            [ ul [ class "list left mw6 ba b--light-silver br2" ]
+                (List.map (\l -> li [] [ text l ]) rawList)
+            ]
         ]
 
 
