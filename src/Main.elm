@@ -86,16 +86,6 @@ convertFourLinesToRawNums input =
 
 
 
--- Function to take three strings of 27 chars each and return 9 strings corresponding
--- to the first 3, next 3, next 3... characters of each string.
-
-
-stripAndRecombineRawNums : List String -> List String
-stripAndRecombineRawNums inputList =
-    inputList
-
-
-
 -- Function to take ONE string of 27 chars and return a list of nine strings of three chars each
 
 
@@ -109,37 +99,78 @@ breakOneLineIntoLists inputString =
 
 
 -- Function to take THREE lists of nine three-character strings as input, and combine them into ONE list of nine-character strings
+-- combineLines : List String -> List String -> List String -> List String
+-- combineLines a b c =
+--     List.concat [ a, b, c ]
+--         |> List.Extra.groupsOf 9
+--         |> List.concat
 
 
 combineLines : List String -> List String -> List String -> List String
 combineLines a b c =
-    List.concat [ a, b, c ]
-        |> List.Extra.groupsOf 9
-        |> List.concat
+    let
+        line1s =
+            case a of
+                [] ->
+                    []
+
+                x :: xs ->
+                    xs
+
+        line2s =
+            case b of
+                [] ->
+                    []
+
+                x :: xs ->
+                    xs
+
+        line3s =
+            case c of
+                [] ->
+                    []
+
+                x :: xs ->
+                    xs
+
+        line1first =
+            case a of
+                [] ->
+                    []
+
+                x :: xs ->
+                    [ x ]
+
+        line2first =
+            case b of
+                [] ->
+                    []
+
+                x :: xs ->
+                    [ x ]
+
+        line3first =
+            case c of
+                [] ->
+                    []
+
+                x :: xs ->
+                    [ x ]
+
+        -- nextChunks =
+        --     combineLines line1s line2s line3s
+    in
+    line1first ++ line2first ++ line3first
 
 
+sumOfSquares : Int -> Int
+sumOfSquares n =
+    case n of
+        0 ->
+            0
 
--- let
---     charA =
---         String.toList a
---
---     charB =
---         String.toList b
---
---     charC =
---         String.toList c
---
---     charCombine =
---         List.concat [ charA, charB, charC ]
---             |> String.fromList
--- in
--- charCombine
--- recursive function: take three lists of strings, combine their first strings into one, pass remainders of lists into same function
--- |> String.concat
--- |> List.singleton
--- |> String.concat
--- |> String.toList
--- in
+        _ ->
+            (n ^ 2) + sumOfSquares (n - 1)
 
 
 convertLineOfText : String -> List (Maybe NumberFromBars)
