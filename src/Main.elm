@@ -12,12 +12,46 @@ import Parser exposing ((|.), (|=), Parser, spaces, succeed, symbol)
 
 
 type alias Model =
-    {}
+    { accountList : List NumberFromBars }
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( {}, Cmd.none )
+    let
+        listOfRawNums =
+            convertFourLinesToRawNums rawText
+
+        listOfAccounts =
+            convertRawNumToNumberFromBars listOfRawNums
+    in
+    ( { accountList = [ listOfAccounts ]
+      }
+    , Cmd.none
+    )
+
+
+convertRawNumToNumberFromBars : List String -> NumberFromBars
+convertRawNumToNumberFromBars listOfRawNums =
+    listOfRawNums
+        |> List.map convertRawNumToBar
+        |> List.concat
+
+
+convertRawNumToBar : String -> NumberFromBars
+convertRawNumToBar input =
+    input
+        |> String.toList
+        |> List.map
+            (\c ->
+                if c == '_' then
+                    LitBar
+
+                else if c == '|' then
+                    LitBar
+
+                else
+                    EmptyBar
+            )
 
 
 rawText : String
@@ -41,7 +75,7 @@ validOne =
 
 validTwo : NumberFromBars
 validTwo =
-    [ EmptyBar, LitBar, EmptyBar, LitBar, LitBar, LitBar, LitBar, LitBar, EmptyBar ]
+    [ EmptyBar, LitBar, EmptyBar, EmptyBar, LitBar, LitBar, LitBar, LitBar, EmptyBar ]
 
 
 validThree : NumberFromBars
@@ -49,8 +83,39 @@ validThree =
     [ EmptyBar, LitBar, EmptyBar, EmptyBar, LitBar, LitBar, EmptyBar, LitBar, LitBar ]
 
 
+validFour : NumberFromBars
+validFour =
+    [ EmptyBar, EmptyBar, EmptyBar, LitBar, LitBar, LitBar, EmptyBar, EmptyBar, LitBar ]
 
--- TODO: more valid digits, through nine, and don't forget zero
+
+validFive : NumberFromBars
+validFive =
+    [ EmptyBar, LitBar, EmptyBar, LitBar, LitBar, EmptyBar, EmptyBar, LitBar, LitBar ]
+
+
+validSix : NumberFromBars
+validSix =
+    [ EmptyBar, LitBar, EmptyBar, LitBar, LitBar, EmptyBar, LitBar, LitBar, LitBar ]
+
+
+validSeven : NumberFromBars
+validSeven =
+    [ EmptyBar, LitBar, EmptyBar, EmptyBar, EmptyBar, LitBar, EmptyBar, EmptyBar, LitBar ]
+
+
+validEight : NumberFromBars
+validEight =
+    [ EmptyBar, LitBar, EmptyBar, LitBar, LitBar, LitBar, LitBar, LitBar, LitBar ]
+
+
+validNine : NumberFromBars
+validNine =
+    [ EmptyBar, LitBar, EmptyBar, LitBar, LitBar, LitBar, EmptyBar, LitBar, LitBar ]
+
+
+validZero : NumberFromBars
+validZero =
+    [ EmptyBar, LitBar, EmptyBar, LitBar, EmptyBar, LitBar, LitBar, LitBar, LitBar ]
 
 
 convertFourLinesToRawNums : String -> List String
@@ -217,19 +282,84 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    let
-        rawList : List String
-        rawList =
-            convertFourLinesToRawNums rawText
-    in
     div []
         [ img [ src "/logo.svg" ] []
         , h1 [] [ text "Your Elm App is working!" ]
         , h2 [ class "f4 bold center mw6 courier" ]
             [ ul [ class "list left mw6 ba b--light-silver br2" ]
-                (List.map (\l -> li [] [ text l ]) rawList)
+                (renderAccountList
+                    model
+                )
             ]
         ]
+
+
+renderAccountList : Model -> List (Html msg)
+renderAccountList model =
+    let
+        listOfAccounts =
+            model.accountList
+
+        regularNums =
+            listOfAccounts
+                |> List.map getValidNums
+
+        collapsedNums =
+            regularNums
+                |> List.map String.concat
+    in
+    List.map (\l -> li [] [ text l ]) collapsedNums
+
+
+getValidNums : NumberFromBars -> List String
+getValidNums input =
+    let
+        output =
+            input
+                |> List.Extra.groupsOf 9
+
+        output2 =
+            output
+                |> List.map
+                    (\n ->
+                        if n == validOne then
+                            "1"
+
+                        else if n == validTwo then
+                            "2"
+
+                        else if n == validThree then
+                            "3"
+
+                        else if n == validFour then
+                            "4"
+
+                        else if n == validFive then
+                            "5"
+
+                        else if n == validSix then
+                            "6"
+
+                        else if n == validSeven then
+                            "7"
+
+                        else if n == validEight then
+                            "8"
+
+                        else if n == validNine then
+                            "9"
+
+                        else if n == validZero then
+                            "0"
+
+                        else
+                            Debug.toString n
+                    )
+
+        -- output3 =
+        --     String.concat [ output2 ]
+    in
+    output2
 
 
 
