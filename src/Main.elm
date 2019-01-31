@@ -1,10 +1,22 @@
-module Main exposing (Model, Msg(..), init, main, rawText, update, view)
+module Main exposing
+    ( Model
+    , Msg(..)
+    , init
+    , main
+    , rawText
+    , update
+    , view
+    )
 
 import Browser
+import File exposing (File)
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Html.Events exposing (..)
+import Json.Decode as JD
 import List.Extra
 import Parser exposing ((|.), (|=), Parser, spaces, succeed, symbol)
+import Task
 
 
 
@@ -18,8 +30,11 @@ type alias Model =
 init : ( Model, Cmd Msg )
 init =
     let
+        inputFile =
+            rawText
+
         listOfRawNums =
-            convertFourLinesToRawNums rawText
+            convertFourLinesToRawNums inputFile
 
         listOfAccounts =
             convertRawNumToNumberFromBars listOfRawNums
@@ -28,6 +43,11 @@ init =
       }
     , Cmd.none
     )
+
+
+filesDecoder : JD.Decoder (List File)
+filesDecoder =
+    JD.at [ "target", "files" ] (JD.list File.decoder)
 
 
 convertRawNumToNumberFromBars : List String -> NumberFromBars
@@ -268,12 +288,57 @@ thingTest =
 
 
 type Msg
-    = NoOp
+    = GotFiles (List File)
+    | TxtFileLoaded String
+    | NoOp
+
+
+readFile :
+    File
+    -> Cmd Msg -- was Cmd String
+readFile file =
+    Task.perform TxtFileLoaded (File.toString file)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    ( model, Cmd.none )
+    case msg of
+        GotFiles files ->
+            let
+                inputFile =
+                    List.head files
+
+                inputFileString =
+                    case inputFile of
+                        Nothing ->
+                            Cmd.none
+
+                        Just firstFile ->
+                            let
+                                taskResult : Cmd Msg
+                                taskResult =
+                                    readFile firstFile
+                            in
+                            taskResult
+            in
+            ( model, Cmd.none )
+
+        TxtFileLoaded thisFile ->
+            let
+                listOfRawNums =
+                    convertFourLinesToRawNums thisFile
+
+                listOfAccounts =
+                    convertRawNumToNumberFromBars listOfRawNums
+            in
+            ( { model
+                | accountList = [ listOfAccounts ]
+              }
+            , Cmd.none
+            )
+
+        NoOp ->
+            ( model, Cmd.none )
 
 
 
@@ -285,6 +350,14 @@ view model =
     div []
         [ img [ src "/logo.svg" ] []
         , h1 [] [ text "Your Elm App is working!" ]
+        , div [ class "f4 bold center mw6 courier" ]
+            [ input
+                [ type_ "file"
+                , multiple False
+                , on "change" (JD.map GotFiles filesDecoder)
+                ]
+                []
+            ]
         , h2 [ class "f4 bold center mw6 courier" ]
             [ ul [ class "list left mw6 ba b--light-silver br2" ]
                 (renderAccountList
