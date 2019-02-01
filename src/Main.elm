@@ -10,12 +10,11 @@ module Main exposing
 
 import Browser
 import File exposing (File)
+import File.Select as Select
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
-import Json.Decode as JD
 import List.Extra
-import Parser exposing ((|.), (|=), Parser, spaces, succeed, symbol)
 import Task
 
 
@@ -43,11 +42,6 @@ init =
       }
     , Cmd.none
     )
-
-
-filesDecoder : JD.Decoder (List File)
-filesDecoder =
-    JD.at [ "target", "files" ] (JD.list File.decoder)
 
 
 convertRawNumToNumberFromBars : List String -> NumberFromBars
@@ -264,69 +258,30 @@ combineLines a b c =
     line1first ++ line2first ++ line3first ++ nextChunks
 
 
-convertLineOfText : String -> List (Maybe NumberFromBars)
-convertLineOfText text =
-    [ Just validOne ]
-
-
-thingTest : Parser Bar
-thingTest =
-    succeed LitBar
-        |. symbol " "
-        |. symbol "_"
-        |. symbol " "
-        |. symbol "|"
-        |. symbol "_"
-        |. symbol "|"
-        |. symbol "|"
-        |. symbol "_"
-        |. symbol "|"
-
-
 
 ---- UPDATE ----
 
 
 type Msg
-    = GotFiles (List File)
-    | TxtFileLoaded String
+    = OpenFileClicked
+    | FileSelected File
+    | FileRead String
     | NoOp
-
-
-readFile :
-    File
-    -> Cmd Msg -- was Cmd String
-readFile file =
-    Task.perform TxtFileLoaded (File.toString file)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        GotFiles files ->
-            let
-                inputFile =
-                    List.head files
+        OpenFileClicked ->
+            ( model, Select.file [] FileSelected )
 
-                inputFileString =
-                    case inputFile of
-                        Nothing ->
-                            Cmd.none
+        FileSelected file ->
+            ( model, Task.perform FileRead (File.toString file) )
 
-                        Just firstFile ->
-                            let
-                                taskResult : Cmd Msg
-                                taskResult =
-                                    readFile firstFile
-                            in
-                            taskResult
-            in
-            ( model, Cmd.none )
-
-        TxtFileLoaded thisFile ->
+        FileRead content ->
             let
                 listOfRawNums =
-                    convertFourLinesToRawNums thisFile
+                    convertFourLinesToRawNums content
 
                 listOfAccounts =
                     convertRawNumToNumberFromBars listOfRawNums
@@ -351,12 +306,7 @@ view model =
         [ img [ src "/logo.svg" ] []
         , h1 [] [ text "Your Elm App is working!" ]
         , div [ class "f4 bold center mw6 courier" ]
-            [ input
-                [ type_ "file"
-                , multiple False
-                , on "change" (JD.map GotFiles filesDecoder)
-                ]
-                []
+            [ button [ onClick OpenFileClicked ] [ text "Pick file" ]
             ]
         , h2 [ class "f4 bold center mw6 courier" ]
             [ ul [ class "list left mw6 ba b--light-silver br2" ]
