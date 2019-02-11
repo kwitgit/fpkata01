@@ -22,57 +22,6 @@ import Task
 ---- MODEL ----
 
 
-type alias Model =
-    { accountList : List NumberFromBars }
-
-
-init : ( Model, Cmd Msg )
-init =
-    let
-        inputFile =
-            rawText
-
-        listOfRawNums =
-            convertFourLinesToRawNums inputFile
-
-        listOfAccounts =
-            convertRawNumToNumberFromBars listOfRawNums
-    in
-    ( { accountList = [ listOfAccounts ]
-      }
-    , Cmd.none
-    )
-
-
-convertRawNumToNumberFromBars : List String -> NumberFromBars
-convertRawNumToNumberFromBars listOfRawNums =
-    listOfRawNums
-        |> List.map convertRawNumToBar
-        |> List.concat
-
-
-convertRawNumToBar : String -> NumberFromBars
-convertRawNumToBar input =
-    input
-        |> String.toList
-        |> List.map
-            (\c ->
-                if c == '_' then
-                    LitBar
-
-                else if c == '|' then
-                    LitBar
-
-                else
-                    EmptyBar
-            )
-
-
-rawText : String
-rawText =
-    "    _  _     _  _  _  _  _ \n  | _| _||_||_ |_   ||_||_|\n  ||_  _|  | _||_|  ||_| _|\n\n"
-
-
 type Bar
     = LitBar
     | EmptyBar
@@ -132,12 +81,56 @@ validZero =
     [ EmptyBar, LitBar, EmptyBar, LitBar, EmptyBar, LitBar, LitBar, LitBar, LitBar ]
 
 
+type alias Model =
+    { accountList : List NumberFromBars }
+
+
+rawText : String
+rawText =
+    "    _  _     _  _  _  _  _ \n  | _| _||_||_ |_   ||_||_|\n  ||_  _|  | _||_|  ||_| _|\n\n"
+
+
+convertRawNumToNumberFromBars : List String -> NumberFromBars
+convertRawNumToNumberFromBars listOfRawNums =
+    listOfRawNums
+        |> List.map convertRawNumToBar
+        |> List.concat
+
+
+convertRawNumToBar : String -> NumberFromBars
+convertRawNumToBar input =
+    input
+        |> String.toList
+        |> List.map
+            (\c ->
+                if c == '_' then
+                    LitBar
+
+                else if c == '|' then
+                    LitBar
+
+                else
+                    EmptyBar
+            )
+
+
+
+-- function to take an entire file, given as a string,
+-- separate it out into individual groups of four lines to
+-- each be turned into an account number
+
+
+getGroupsOfFourLines : String -> List String
+getGroupsOfFourLines stringOfFile =
+    stringOfFile
+        |> String.split "\n\n"
+
+
 convertFourLinesToRawNums : String -> List String
 convertFourLinesToRawNums input =
     let
         listOfLines =
             input
-                -- |> String.replace " " "w"
                 |> String.split "\n"
                 |> List.take 3
                 |> List.map breakOneLineIntoLists
@@ -258,6 +251,24 @@ combineLines a b c =
     line1first ++ line2first ++ line3first ++ nextChunks
 
 
+init : ( Model, Cmd Msg )
+init =
+    -- let
+    --     inputFile =
+    --         rawText
+    --
+    --     listOfRawNums =
+    --         convertFourLinesToRawNums inputFile
+    --
+    --     listOfAccounts =
+    --         convertRawNumToNumberFromBars listOfRawNums
+    -- in
+    ( { accountList = []
+      }
+    , Cmd.none
+    )
+
+
 
 ---- UPDATE ----
 
@@ -280,14 +291,21 @@ update msg model =
 
         FileRead content ->
             let
-                listOfRawNums =
-                    convertFourLinesToRawNums content
+                listOfAccountGroups : List String
+                listOfAccountGroups =
+                    getGroupsOfFourLines content
 
+                listOfRawNums : List (List String)
+                listOfRawNums =
+                    listOfAccountGroups
+                        |> List.map convertFourLinesToRawNums
+
+                listOfAccounts : List NumberFromBars
                 listOfAccounts =
-                    convertRawNumToNumberFromBars listOfRawNums
+                    List.map convertRawNumToNumberFromBars listOfRawNums
             in
             ( { model
-                | accountList = [ listOfAccounts ]
+                | accountList = listOfAccounts
               }
             , Cmd.none
             )
@@ -315,6 +333,11 @@ view model =
                 )
             ]
         ]
+
+
+
+-- Take the list of account numbers (in the model), get valid numbers for
+-- all accounts in the list,
 
 
 renderAccountList : Model -> List (Html msg)
