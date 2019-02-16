@@ -157,7 +157,7 @@ convertFourLinesToRawNums input =
 
 
 
--- Function to take ONE string , which is a line of 27 chars, and return a list of nine strings of three chars each
+-- Function to take ONE string , which is a line of 27 chars, and return a list of NINE strings of three chars each
 
 
 breakOneLineIntoLists : String -> List String
@@ -254,15 +254,6 @@ combineLines a b c =
 init : ( Model, Cmd Msg )
 init =
     -- let
-    --     inputFile =
-    --         rawText
-    --
-    --     listOfRawNums =
-    --         convertFourLinesToRawNums inputFile
-    --
-    --     listOfAccounts =
-    --         convertRawNumToNumberFromBars listOfRawNums
-    -- in
     ( { accountList = []
       }
     , Cmd.none
@@ -302,7 +293,8 @@ update msg model =
 
                 listOfAccounts : List NumberFromBars
                 listOfAccounts =
-                    List.map convertRawNumToNumberFromBars listOfRawNums
+                    listOfRawNums
+                        |> List.map convertRawNumToNumberFromBars
             in
             ( { model
                 | accountList = listOfAccounts
@@ -399,11 +391,9 @@ getValidNums input =
                             "0"
 
                         else
-                            Debug.toString n
+                            "?"
+                     -- Debug.toString n
                     )
-
-        -- output3 =
-        --     String.concat [ output2 ]
     in
     output2
 
