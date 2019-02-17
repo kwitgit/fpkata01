@@ -81,13 +81,13 @@ validZero =
 
 
 type alias AccountInfo =
-    { barredAccountNum : NumberFromBars
+    { accountNum : String
     , checksum : CustomChecksum
     }
 
 
 type alias Model =
-    { accountList : List NumberFromBars }
+    { accountList : List AccountInfo }
 
 
 rawText : String
@@ -300,9 +300,14 @@ update msg model =
                 listOfAccounts =
                     listOfRawNums
                         |> List.map convertRawNumToNumberFromBars
+
+                listOfChecksummedAccounts : List AccountInfo
+                listOfChecksummedAccounts =
+                    listOfAccounts
+                        |> List.map createAccountInfo
             in
             ( { model
-                | accountList = listOfAccounts
+                | accountList = listOfChecksummedAccounts
               }
             , Cmd.none
             )
@@ -343,11 +348,32 @@ renderAccountList model =
         listOfAccounts =
             model.accountList
 
-        collapsedNums =
-            listOfAccounts
-                |> List.map getAccountNum
+        -- collapsedNums =
+        --     listOfAccounts
+        --         |> List.map getAccountNum
     in
-    List.map (\l -> li [] [ text l ]) collapsedNums
+    List.map (\l -> li [] [ renderSingleAccount l ]) listOfAccounts
+
+
+renderSingleAccount : AccountInfo -> Html msg
+renderSingleAccount accountInfo =
+    let
+        checksumString =
+            case accountInfo.checksum of
+                ChecksumError ->
+                    "Illegible!"
+
+                ChecksumAmbiguous stringList ->
+                    String.concat [ "Ambiguous! ", String.concat stringList ]
+
+                CalcedChecksum checkSum ->
+                    if checkSum == 0 then
+                        "Good!"
+
+                    else
+                        "Bad checksum: " ++ String.fromInt checkSum
+    in
+    text (String.concat [ accountInfo.accountNum, ", ", checksumString ])
 
 
 getValidNums : NumberFromBars -> List String
@@ -404,6 +430,20 @@ getAccountNum input =
     input
         |> getValidNums
         |> String.concat
+
+
+createAccountInfo : NumberFromBars -> AccountInfo
+createAccountInfo input =
+    let
+        accountNum =
+            getAccountNum input
+
+        thisChecksum =
+            calcChecksum accountNum
+    in
+    { accountNum = accountNum
+    , checksum = thisChecksum
+    }
 
 
 
@@ -486,7 +526,11 @@ calcChecksum input =
                                                                                                     + (char1 * 9)
 
                                                                                             moddedSum =
-                                                                                                modBy thisSum 11
+                                                                                                if thisSum > 0 then
+                                                                                                    modBy 11 thisSum
+
+                                                                                                else
+                                                                                                    999999
                                                                                         in
                                                                                         CalcedChecksum moddedSum
         in
