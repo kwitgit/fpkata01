@@ -82,7 +82,7 @@ validZero =
 
 type alias AccountInfo =
     { barredAccountNum : NumberFromBars
-    , checksum : Int
+    , checksum : CustomChecksum
     }
 
 
@@ -473,17 +473,22 @@ calcChecksum input =
                                                                                         ChecksumError
 
                                                                                     Just char1 ->
-                                                                                        CalcedChecksum
-                                                                                            ((char9 * 1)
-                                                                                                + (char8 * 2)
-                                                                                                + (char7 * 3)
-                                                                                                + (char6 * 4)
-                                                                                                + (char5 * 5)
-                                                                                                + (char4 * 6)
-                                                                                                + (char3 * 7)
-                                                                                                + (char2 * 8)
-                                                                                                + (char1 * 9)
-                                                                                            )
+                                                                                        let
+                                                                                            thisSum =
+                                                                                                (char9 * 1)
+                                                                                                    + (char8 * 2)
+                                                                                                    + (char7 * 3)
+                                                                                                    + (char6 * 4)
+                                                                                                    + (char5 * 5)
+                                                                                                    + (char4 * 6)
+                                                                                                    + (char3 * 7)
+                                                                                                    + (char2 * 8)
+                                                                                                    + (char1 * 9)
+
+                                                                                            moddedSum =
+                                                                                                modBy thisSum 11
+                                                                                        in
+                                                                                        CalcedChecksum moddedSum
         in
         calc
 
@@ -494,28 +499,14 @@ getIntFromCharList whichOne charList =
         tryChar =
             List.Extra.getAt whichOne charList
 
-        thisString : Maybe String
         thisString =
             case tryChar of
                 Nothing ->
                     Nothing
 
                 Just thisChar ->
-                    let
-                        extractedString =
-                            String.fromChar thisChar
+                    Just (String.fromChar thisChar)
 
-                        -- outputString =
-                        --     case extractedString of
-                        --         Nothing ->
-                        --             Nothing
-                        --
-                        --         Just aGoodString ->
-                        --             extractedString
-                    in
-                    extractedString
-
-        thisInt : Maybe Int
         thisInt =
             case thisString of
                 Nothing ->
