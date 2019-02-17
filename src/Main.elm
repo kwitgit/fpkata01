@@ -3,7 +3,6 @@ module Main exposing
     , Msg(..)
     , init
     , main
-    , rawText
     , update
     , view
     )
@@ -79,6 +78,12 @@ validNine =
 validZero : NumberFromBars
 validZero =
     [ EmptyBar, LitBar, EmptyBar, LitBar, EmptyBar, LitBar, LitBar, LitBar, LitBar ]
+
+
+type alias AccountInfo =
+    { barredAccountNum : NumberFromBars
+    , checksum : Int
+    }
 
 
 type alias Model =
@@ -338,13 +343,9 @@ renderAccountList model =
         listOfAccounts =
             model.accountList
 
-        regularNums =
-            listOfAccounts
-                |> List.map getValidNums
-
         collapsedNums =
-            regularNums
-                |> List.map String.concat
+            listOfAccounts
+                |> List.map getAccountNum
     in
     List.map (\l -> li [] [ text l ]) collapsedNums
 
@@ -396,6 +397,152 @@ getValidNums input =
                     )
     in
     output2
+
+
+getAccountNum : NumberFromBars -> String
+getAccountNum input =
+    input
+        |> getValidNums
+        |> String.concat
+
+
+
+-- account number:  3  4  5  8  8  2  8  6  5
+-- position names:  d9 d8 d7 d6 d5 d4 d3 d2 d1
+-- checksum calculation:
+-- (d1+2*d2+3*d3+...+9*d9) mod 11 = 0
+
+
+calcChecksum : String -> CustomChecksum
+calcChecksum input =
+    if String.contains "?" input then
+        ChecksumError
+
+    else if String.all Char.isDigit input == False then
+        ChecksumError
+
+    else
+        let
+            charList =
+                input
+                    |> String.toList
+
+            calc =
+                case getIntFromCharList 8 charList of
+                    Nothing ->
+                        ChecksumError
+
+                    Just char9 ->
+                        case getIntFromCharList 7 charList of
+                            Nothing ->
+                                ChecksumError
+
+                            Just char8 ->
+                                case getIntFromCharList 6 charList of
+                                    Nothing ->
+                                        ChecksumError
+
+                                    Just char7 ->
+                                        case getIntFromCharList 5 charList of
+                                            Nothing ->
+                                                ChecksumError
+
+                                            Just char6 ->
+                                                case getIntFromCharList 4 charList of
+                                                    Nothing ->
+                                                        ChecksumError
+
+                                                    Just char5 ->
+                                                        case getIntFromCharList 3 charList of
+                                                            Nothing ->
+                                                                ChecksumError
+
+                                                            Just char4 ->
+                                                                case getIntFromCharList 2 charList of
+                                                                    Nothing ->
+                                                                        ChecksumError
+
+                                                                    Just char3 ->
+                                                                        case getIntFromCharList 1 charList of
+                                                                            Nothing ->
+                                                                                ChecksumError
+
+                                                                            Just char2 ->
+                                                                                case getIntFromCharList 0 charList of
+                                                                                    Nothing ->
+                                                                                        ChecksumError
+
+                                                                                    Just char1 ->
+                                                                                        CalcedChecksum
+                                                                                            ((char9 * 1)
+                                                                                                + (char8 * 2)
+                                                                                                + (char7 * 3)
+                                                                                                + (char6 * 4)
+                                                                                                + (char5 * 5)
+                                                                                                + (char4 * 6)
+                                                                                                + (char3 * 7)
+                                                                                                + (char2 * 8)
+                                                                                                + (char1 * 9)
+                                                                                            )
+        in
+        calc
+
+
+getIntFromCharList : Int -> List Char -> Maybe Int
+getIntFromCharList whichOne charList =
+    let
+        tryChar =
+            List.Extra.getAt whichOne charList
+
+        thisString : Maybe String
+        thisString =
+            case tryChar of
+                Nothing ->
+                    Nothing
+
+                Just thisChar ->
+                    let
+                        extractedString =
+                            String.fromChar thisChar
+
+                        -- outputString =
+                        --     case extractedString of
+                        --         Nothing ->
+                        --             Nothing
+                        --
+                        --         Just aGoodString ->
+                        --             extractedString
+                    in
+                    extractedString
+
+        thisInt : Maybe Int
+        thisInt =
+            case thisString of
+                Nothing ->
+                    Nothing
+
+                Just stringFromChar ->
+                    let
+                        extractedInt =
+                            String.toInt stringFromChar
+
+                        outputInt =
+                            case extractedInt of
+                                Nothing ->
+                                    Nothing
+
+                                Just aGoodInt ->
+                                    extractedInt
+                    in
+                    outputInt
+    in
+    thisInt
+
+
+type CustomChecksum
+    = CalcedChecksum Int
+    | ChecksumError
+    | ChecksumAmbiguous (List String)
 
 
 
