@@ -90,6 +90,16 @@ type alias Model =
     { accountList : List AccountInfo }
 
 
+type CustomChecksum
+    = CalcedChecksum Int
+    | ChecksumError
+    | ChecksumAmbiguous (List String)
+
+
+
+-- This function isn't called anywhere, it was used in testing the original Story 1
+
+
 rawText : String
 rawText =
     "    _  _     _  _  _  _  _ \n  | _| _||_||_ |_   ||_||_|\n  ||_  _|  | _||_|  ||_| _|\n\n"
@@ -337,20 +347,11 @@ view model =
         ]
 
 
-
--- Take the list of account numbers (in the model), get valid numbers for
--- all accounts in the list,
-
-
 renderAccountList : Model -> List (Html msg)
 renderAccountList model =
     let
         listOfAccounts =
             model.accountList
-
-        -- collapsedNums =
-        --     listOfAccounts
-        --         |> List.map getAccountNum
     in
     List.map (\l -> li [] [ renderSingleAccount l ]) listOfAccounts
 
@@ -572,12 +573,6 @@ getIntFromCharList whichOne charList =
                     outputInt
     in
     thisInt
-
-
-type CustomChecksum
-    = CalcedChecksum Int
-    | ChecksumError
-    | ChecksumAmbiguous (List String)
 
 
 
